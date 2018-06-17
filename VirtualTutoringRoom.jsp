@@ -66,11 +66,24 @@ document.getElementById("submit-button3").disabled=true;
 <%@ page import="java.sql.DriverManager"%>
 <%@ page import="org.apache.commons.lang.StringEscapeUtils" %>
 
+<%!     
 
+
+
+static String username,meetingID,coursename;
+static String joinURL,PantherID,b;
+static int rowsaffected=0;
+
+
+ 
+
+
+%>
 
 <br>
 
 <%
+
 	if (request.getParameterMap().isEmpty()) {
 
 		//
@@ -98,7 +111,7 @@ document.getElementById("submit-button3").disabled=true;
 		
 			<input id="submit-button1" type="submit" value="join meeting" /></td>
 </tr>
-<INPUT TYPE=hidden NAME=action VALUE="enter"> <br />
+<INPUT TYPE=hidden NAME=action VALUE="login"> <br />
 	</tbody>
 </table>
 </FORM>
@@ -119,7 +132,7 @@ document.getElementById("submit-button3").disabled=true;
 			
 			<input id="submit-button2" type="submit" value="join meeting" /></td>
                          </tr>
-<INPUT TYPE=hidden NAME=action VALUE="enter"> <br />
+<INPUT TYPE=hidden NAME=action VALUE="login"> <br />
 </FORM>
 </tbody>
 </table>
@@ -139,7 +152,7 @@ document.getElementById("submit-button3").disabled=true;
 			
 			<input id="submit-button3" type="submit" value="join meeting" /></td>
                          </tr>
-<INPUT TYPE=hidden NAME=action VALUE="enter"> <br />
+<INPUT TYPE=hidden NAME=action VALUE="login"> <br />
 </FORM>
 			
 	</tbody>
@@ -157,21 +170,44 @@ document.getElementById("submit-button3").disabled=true;
 	} else if (request.getParameter("action").equals("enter")) {
 		//
 		// The user is now attempting to joing the meeting
-		//
-		String coursename = request.getParameter("coursename");
-String joinURL=null;
+		
+	
+
  SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                  Date mycreatedate = sdf.parse(sdf.format(new Date()));
 String createdate=sdf.format(mycreatedate);
-		String meetingID= coursename+createdate;
+		 meetingID=coursename+createdate;
+ PantherID = request.getParameter("PantherID");
+		
+		String password = request.getParameter("password");
+
 try {
             	 Class.forName("com.mysql.jdbc.Driver");
                  Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/demo","root","root");
-                 PreparedStatement stmt = null;
-stmt= conn.prepareStatement("select url from meeting where meetingID=?");
-stmt.setString(1,meetingID);
-ResultSet rs=stmt.executeQuery();
+                 PreparedStatement stmt,stmt1 = null;
+
+stmt= conn.prepareStatement("select pantherid,password from users where pantherid=? and password=?");
+stmt.setString(1,PantherID);
+stmt.setString(2,password);
+
+
+ResultSet rs,rs1 =null;
+rs=stmt.executeQuery();
 if(rs.next()==false)
+{
+%>
+<script>
+confirm("Incorrect details");
+window.location="login.jsp";
+</script>
+<%
+}
+else
+{
+stmt1= conn.prepareStatement("select url from meeting where meetingID=?");
+stmt1.setString(1,meetingID);
+ rs1=stmt1.executeQuery();
+if(rs1.next()==false)
 {
 %>
 <script type="text/javascript">
@@ -183,7 +219,7 @@ window.location="VirtualTutoringRoom.jsp";
 else
 {
 
- joinURL=rs.getString("url");
+ joinURL=rs1.getString("url");
 
 if(joinURL==null)
 {
@@ -205,7 +241,7 @@ window.location = "<%=joinURL%>";
 <%
 }
 }
-           
+  }         
 
             } catch (Exception e) {
                 // TODO Auto-generated catch block
@@ -214,10 +250,61 @@ window.location = "<%=joinURL%>";
 
 		
 }
+
+else if(request.getParameter("action").equals("login")){
+coursename=request.getParameter("coursename");
+
 %>
 
+<%@ include file="demo_header.jsp"%>
 
+<FORM NAME="form1" METHOD="GET">
+<table cellpadding="5" cellspacing="5" style="width: 400px; ">
+	<tbody>
+		<tr>
+			<td>
+				&nbsp;</td>
+			<td style="text-align: right; ">
+				PantherID:&nbsp;</td>
+			<td style="width: 5px; ">
+				&nbsp;</td>
+			<td style="text-align: left ">
+				<input type="text" autofocus required name="PantherID" /></td>
+		</tr>
+		
+	
+		
+		
+		<tr>
+			<td>
+				&nbsp;</td>
+			<td style="text-align: right; ">
+				Password:</td>
+			<td>
+				&nbsp;</td>
+			<td>
+				<input type="password" required name="password" /></td>
+		</tr>
+		
+		<tr>
+			<td>
+				&nbsp;</td>
+			<td>
+				&nbsp;</td>
+			<td>
+				&nbsp;</td>
+			<td>
+				<input type="submit" value="Join" /></td>
+		</tr>	
+	</tbody>
+</table>
+<INPUT TYPE=hidden NAME=action VALUE="enter">
+</FORM>
 
+<%
+}
+
+%>
 
 
 

@@ -60,7 +60,7 @@ Author: Fred Dixon <ffdixon@bigbluebutton.org>
 
 
 static String username,meetingID,endtime,starttime,coursename,createtime;
-static String joinURL;
+static String joinURL,PantherID,b1;
 static int rowsaffected=0;
 
 
@@ -101,7 +101,7 @@ static int rowsaffected=0;
 
 
 </tr>
-<INPUT TYPE=hidden NAME=action VALUE="enter"> <br />
+<INPUT TYPE=hidden NAME=action VALUE="login"> <br />
 	</tbody>
 </table>
 </FORM>
@@ -123,7 +123,7 @@ static int rowsaffected=0;
 			<td>
 			<input id="submit-button" name="b1"type="submit" value="create meeting" /></td>
                          </tr>
-<INPUT TYPE=hidden NAME=action VALUE="enter"> <br />
+<INPUT TYPE=hidden NAME=action VALUE="login"> <br />
 </FORM>
 </tbody>
 </table>
@@ -144,7 +144,7 @@ static int rowsaffected=0;
 			<td>
 			<input id="submit-button" name="b1"type="submit" value="create meeting" /></td>
                          </tr>
-<INPUT TYPE=hidden NAME=action VALUE="enter"> <br />
+<INPUT TYPE=hidden NAME=action VALUE="login"> <br />
 
 			
 	</tbody>
@@ -154,46 +154,75 @@ static int rowsaffected=0;
 
 <%
 	} else if (request.getParameter("action").equals("enter")) {
-if(request.getParameter("b1").equals("create meeting")){
+
 		//
 		// User has requested to create a meeting
 		//
-TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"));
-		 coursename = request.getParameter("coursename");
-                 username=request.getParameter("username");
-                 starttime=request.getParameter("startime");
-                 endtime=request.getParameter("endtime");
+                 TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"));
+
                  SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                  Date mycreatedate = sdf.parse(sdf.format(new Date()));
-String createdate=sdf.format(mycreatedate);
-
+ username="Srithi";
+ PantherID=request.getParameter("PantherID");
+ String createdate=sdf.format(mycreatedate);
+int rowseffected=0;
  meetingID=coursename+createdate;
-                joinURL =getJoinURL(coursename, meetingID, "false", "<br>Welcome to %%CONFNAME%%.<br>", null, null);
+                joinURL =getJoinURL(username, meetingID, "false", "<br>Welcome to %%CONFNAME%%.<br>", null, null);
+  PreparedStatement stmt=null,stmt1 = null,stmt2=null;
+                ResultSet rs1,rs=null;
  try {
             	 Class.forName("com.mysql.jdbc.Driver");
                  Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/demo","root","root");
-                 PreparedStatement stmt=null,stmt1 = null;
-stmt1=conn.prepareStatement("select coursename from meeting where meetingID=?");
-stmt1.setString(1,meetingID);
-ResultSet rs=stmt1.executeQuery();
+               
+
+stmt= conn.prepareStatement("select coursename from tutor where tutorid=?");
+stmt.setString(1,PantherID);
+ rs=stmt.executeQuery();
+//conn.close();
+}
+catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+
 if(rs.next()==false)
 {
-stmt= conn.prepareStatement("insert into meeting values (?,?,?,?,?,?,?)");
-stmt.setString(1,"Srithi");
-stmt.setString(2,coursename);
-stmt.setString(3,meetingID);
-stmt.setString(4,createdate);
-stmt.setString(5,starttime);
-stmt.setString(6,endtime);
-stmt.setString(7,joinURL);
-rowsaffected=stmt.executeUpdate();
+%>
+<script>
+confirm("You Don't have Permissions to create meeting");
+window.location="logincreate.jsp";
+</script>
+ <%
+}
+else if(b1.equals("create meeting"))
+
+{
+
+try{
+ Class.forName("com.mysql.jdbc.Driver");
+                 Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/demo","root","root");
+stmt1=conn.prepareStatement("select coursename from meeting where meetingID=?");
+stmt1.setString(1,meetingID);
+ rs1=stmt1.executeQuery();
+if(rs1.next()==false)
+{
+stmt1= conn.prepareStatement("insert into meeting values (?,?,?,?,?,?,?)");
+stmt1.setString(1,username);
+stmt1.setString(2,coursename);
+stmt1.setString(3,meetingID);
+stmt1.setString(4,createdate);
+stmt1.setString(5,starttime);
+stmt1.setString(6,endtime);
+stmt1.setString(7,joinURL);
+rowsaffected=stmt1.executeUpdate();
 
            
 if(rowsaffected>0){
 %>
 <script>
 confirm("Meeting created successfully");
-window.location="VirtualTutoringRoom.jsp";
+
 </script>
 <%
  
@@ -204,10 +233,11 @@ else{
 %>
 <script>
 confirm("enter the details properly");
-window.location="createmeeting.jsp";
+
 </script>
 <%
 }
+
 }
 else{
 %>
@@ -218,23 +248,31 @@ window.location="VirtualTutoringRoom.jsp";
 <%
 }
  
-            } catch (Exception e) {
+       }
+catch (Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
-            }
+            }     
+
 
 }
-else if(request.getParameter("b1").equals("end meeting"))
+else if(b1.equals("end meeting"))
 {
-coursename=request.getParameter("coursename");
-SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
- Date mycreatedate = sdf.parse(sdf.format(new Date()));
-String createdate=sdf.format(mycreatedate);
 
- meetingID=coursename+createdate;
 String status=endMeeting(meetingID,"mp");
 if(status=="true")
 {
+try{
+ Class.forName("com.mysql.jdbc.Driver");
+ Connection con = DriverManager.getConnection("jdbc:mysql://localhost/demo","root","root");
+stmt1=con.prepareStatement("delete from meeting where meetingID=?");
+stmt1.setString(1,meetingID);
+stmt1.executeUpdate();
+}catch (Exception e) 
+{
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } 
 %>
 <script>
 confirm("Ended successfully");
@@ -250,11 +288,62 @@ confirm("Issues While ending");
 <%
 }
 }
+
 }
 
+else if(request.getParameter("action").equals("login")){
+coursename=request.getParameter("coursename");
+b1=request.getParameter("b1");
+starttime=request.getParameter("starttime");
+endtime=request.getParameter("endtime");
 
 %>
+
+<%@ include file="demo_header.jsp"%>
+
  
+<div>
+<center>
+<h2>Create a Session </h2>
+
+
+<FORM NAME="form1" METHOD="GET">
+<table cellpadding="5" cellspacing="5" style="width: 400px; ">
+	<tbody>
+		<tr>
+			<td>
+				&nbsp;</td>
+			<td style="text-align: right; ">
+				PantherID&nbsp;</td>
+			<td style="width: 5px; ">
+				&nbsp;</td>
+			<td style="text-align: left ">
+				<input type="text" autofocus required name="PantherID" /></td>
+		</tr>
+		
+	
+		
+		
+		
+		
+		<tr>
+			<td>
+				&nbsp;</td>
+			<td>
+				&nbsp;</td>
+			<td>
+				&nbsp;</td>
+			<td>
+				<input type="submit" value="Join" /></td>
+		</tr>	
+	</tbody>
+</table>
+<INPUT TYPE=hidden NAME=action VALUE="enter">
+</FORM>
+ 
+<%
+}
+%>
 
 
 
